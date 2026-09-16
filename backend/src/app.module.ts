@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
+import { JobsModule } from './jobs/jobs.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -15,9 +14,10 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       appSecret: 'YOUR_APP_SECRET',
       serviceId: 'backend',
     }),
+    JobsModule,
   ],
   
-  controllers: [AppController],
-  providers: [AppService, PrismaService],
+  controllers: [],
+  providers: [PrismaService],
 })
 export class AppModule {}
