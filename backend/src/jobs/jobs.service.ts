@@ -1,8 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { JobStatus } from '../job-status';
+
+const TRANSITIONS: Record<JobStatus, JobStatus[]> = {
+  [JobStatus.PENDING]: [JobStatus.RUNNING],
+  [JobStatus.RUNNING]: [JobStatus.COMPLETED, JobStatus.FAILED],
+  [JobStatus.COMPLETED]: [],
+  [JobStatus.FAILED]: [],
+};
 
 @Injectable()
 export class JobsService {
@@ -38,10 +45,36 @@ export class JobsService {
     if (!job) {
       throw new NotFoundException(`Job with ID ${id} not found`);
     }
-    
-    return this.prisma.job.update({
-      where: { id },
-      data: { status: updateStatusDto.status },
+
+    const currentStatus = job.status as JobStatus;
+    const newStatus = updateStatusDto.status;
+
+    // Check if transition is allowed
+    const allowedTransitions = TRANSITIONS[currentStatus];
+    if (!allowedTransitions.includes(newStatus)) {
+      throw new ConflictException(`Cannot transition from ${currentStatus} to ${newStatus}`);
+    }
+
+    // Optimistic locking using updateMany to catch race conditions
+    const updateResult = await this.prisma.job.updateMany({
+      where: {
+        id: id,
+        version: job.version,
+      },
+      data: {
+        status: newStatus,
+        version: {
+          increment: 1,
+        },
+      },
     });
+
+    // If count is 0, it means the row was updated by another request since we loaded it
+    if (updateResult.count === 0) {
+      throw new ConflictException('Job was modified by another request, please refresh');
+    }
+
+    // Fetch and return the updated job
+    return this.prisma.job.findUnique({ where: { id } });
   }
 }
