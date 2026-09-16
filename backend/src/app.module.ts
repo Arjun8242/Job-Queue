@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
-import { PrismaService } from './prisma.service';
-import { JobsModule } from './jobs/jobs.module';
+import { PrismaService } from './prisma.service.js';
+import { JobsModule } from './jobs/jobs.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 

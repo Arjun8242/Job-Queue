@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
-import { CreateJobDto } from './dto/create-job.dto';
-import { UpdateStatusDto } from './dto/update-status.dto';
-import { JobStatus } from '../job-status';
+import { PrismaService } from '../prisma.service.js';
+import { CreateJobDto } from './dto/create-job.dto.js';
+import { UpdateStatusDto } from './dto/update-status.dto.js';
+import { JobStatus } from '../job-status.js';
 
 const TRANSITIONS: Record<JobStatus, JobStatus[]> = {
   [JobStatus.PENDING]: [JobStatus.RUNNING],
